@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+    <meta charset="UTF-8">
+    <title>FILMMÁNIA - PRÉMIUM VERZIÓ</title>
+    <style>
+        body { 
+            background: radial-gradient(circle at center, #2b0000 0%, #050505 100%);
+            color: white; font-family: 'Segoe UI', sans-serif; 
+            text-align: center; display: flex; flex-direction: column; 
+            align-items: center; justify-content: center; 
+            min-height: 100vh; margin: 0;
+            overflow: hidden;
+        }
+        .box { 
+            background: rgba(20, 20, 20, 0.9); padding: 40px; border-radius: 30px; 
+            border: 3px solid #e50914; box-shadow: 0 0 50px rgba(229, 9, 20, 0.6); 
+            width: 450px; backdrop-filter: blur(10px);
+        }
+        h1 { color: #e50914; letter-spacing: 8px; margin-bottom: 30px; text-shadow: 2px 2px 10px rgba(0,0,0,0.5); }
+        button { 
+            width: 100%; padding: 15px; margin: 8px 0; border-radius: 12px; border: none;
+            font-weight: bold; font-size: 16px; cursor: pointer; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            text-transform: uppercase;
+        }
+        #play-btn { background: #e50914; color: white; }
+        #replay-btn { background: #444; color: white; display: none; }
+        #ans-btn { background: #ffd700; color: black; display: none; margin-top: 15px; }
+        button:hover { transform: scale(1.03); filter: brightness(1.2); }
+        .result { 
+            margin-top: 20px; padding: 20px; border: 2px solid #ffd700; 
+            display: none; border-radius: 15px; font-size: 24px;
+            background: rgba(255, 215, 0, 0.15); animation: pop 0.4s ease-out;
+        }
+        @keyframes pop { 0% { transform: scale(0.8); } 100% { transform: scale(1); } }
+        #error-msg { color: #ff4444; font-size: 13px; margin-top: 15px; display: none; background: rgba(255,0,0,0.2); padding: 10px; border-radius: 8px; }
+    </style>
+</head>
+<body>
+
+    <h1>FILMMÁNIA</h1>
+    <div class="box">
+        <div id="status" style="margin-bottom: 20px; font-weight: bold; color: #ffd700; font-size: 1.2rem;">Készen állsz?</div>
+        
+        <button id="play-btn">▶️ RÉSZLET INDÍTÁSA</button>
+        <button id="replay-btn">🔄 ELÖLRŐL</button>
+        <button id="ans-btn">👁️ MEGOLDÁS</button>
+
+        <div id="result-box" class="result">
+            <div id="res-title" style="font-weight: bold;"></div>
+            <div id="res-year" style="font-size: 18px; color: #ffd700; margin-top: 5px;"></div>
+        </div>
+
+        <div id="error-msg"></div>
+    </div>
+
+<script>
+    const filmek = [
+        { c: "A dzsungel könyve", e: 1967, f: "hang/A_dzsungel_konyve.mp3" },
+        { c: "A galaxis őrzői", e: 2014, f: "hang/A_galaxis_orzoi.mp3" },
+        { c: "A hobbit", e: 2012, f: "hang/A_hobbit_varatlan_utazas.mp3" },
+        { c: "A karate kölyök", e: 2010, f: "hang/A_karatek_kolyok.mp3" },
+        { c: "A Karib-tenger kalózai", e: 2003, f: "hang/A_karib_tenger_kalozai.mp3" },
+        { c: "A Keresztapa", e: 1972, f: "hang/A_keresztapa.mp3" },
+        { c: "Addams Family", e: 1991, f: "hang/Addams_family.mp3" },
+        { c: "Apácashow", e: 1992, f: "hang/Apacashow.mp3" },
+        { c: "Az oroszlánkirály", e: 1994, f: "hang/Az_oroszlankirály.mp3" },
+        { c: "Bad Boys 2", e: 2003, f: "hang/Bad_boys2.mp3" },
+        { c: "Baywatch", e: 2017, f: "hang/Baywatch.mp3" },
+        { c: "Bohém rapszódia", e: 2018, f: "hang/Bohem_rapszodia.mp3" },
+        { c: "Bosszúállók", e: 2012, f: "hang/Bosszusllok.mp3" },
+        { c: "Coco", e: 2017, f: "hang/Coco.mp3" },
+        { c: "Star Wars", e: 1980, f: "hang/csillagok_birodalom_visszavag_1.mp3" },
+        { c: "És megint dühbe jövünk", e: 1978, f: "hang/es_megint_duhbe_jovunk.mp3" },
+        { c: "Feketék fehéren", e: 2004, f: "hang/Feketek_feheren.mp3" },
+        { c: "A Grincs", e: 2000, f: "hang/Grinch.mp3" },
+        { c: "A Gyűrűk Ura", e: 2001, f: "hang/gyuruk_ura_1.mp3" },
+        { c: "Harry Potter", e: 2011, f: "hang/Harry_Potter.mp3" },
+        { c: "Indul a bakterház", e: 1980, f: "hang/Indul_a_bakterhaz.mp3" },
+        { c: "Jégvarázs", e: 2013, f: "hang/jegvarazs.mp3" },
+        { c: "Jumanji", e: 2017, f: "hang/Jumanji_var_a_jungel.mp3" },
+        { c: "Jurassic Park", e: 1997, f: "hang/Jurassic_park_elveszett_vilag.mp3" },
+        { c: "Kincs, ami nincs", e: 1981, f: "hang/Kincs_ami_nincs.mp3" },
+        { c: "Kung Fu Panda", e: 2008, f: "hang/Kung_fu_panda.mp3" },
+        { c: "Madagaszkár", e: 2005, f: "hang/Madagaszkar.mp3" },
+        { c: "A Pál utcai fiúk", e: 1969, f: "hang/Pal_utcai_fiuk.mp3" },
+        { c: "Ready Player One", e: 2018, f: "hang/Ready_player_one.mp3" },
+        { c: "Reszkessetek betörők 2", e: 1992, f: "hang/reszkesetek_betorok2.mp3" },
+        { c: "Rocky", e: 1976, f: "hang/Rocky.mp3" },
+        { c: "A sebhelyesarcú", e: 1983, f: "hang/Sebhelyes.mp3" },
+        { c: "Stranger Things", e: 2016, f: "hang/Stranger_things.mp3" },
+        { c: "Szellemlovas", e: 2007, f: "hang/Szellemlovas (mp3cut.net).mp3" },
+        { c: "Szemfényvesztők", e: 2013, f: "hang/Szemfenyvesztok.mp3" },
+        { c: "The Doors", e: 1991, f: "hang/The_doors.mp3" },
+        { c: "Tolvajtempó", e: 2000, f: "hang/Tolvajtempo.mp3" },
+        { c: "Vasember", e: 2008, f: "hang/Vasember.mp3" },
+        { c: "Vasököl", e: 2011, f: "hang/Vasokol.mp3" },
+        { c: "Zombieland 2", e: 2019, f: "hang/Zombieland2.mp3" }
+    ];
+
+    let audio = new Audio();
+    let pool = [...filmek];
+    let current = null;
+
+    const playBtn = document.getElementById('play-btn');
+    const replayBtn = document.getElementById('replay-btn');
+    const ansBtn = document.getElementById('ans-btn');
+    const status = document.getElementById('status');
+    const resBox = document.getElementById('result-box');
+    const errorBox = document.getElementById('error-msg');
+
+    playBtn.onclick = () => {
+        errorBox.style.display = "none";
+        resBox.style.display = "none";
+        
+        if (!current) {
+            if (pool.length === 0) pool = [...filmek];
+            const idx = Math.floor(Math.random() * pool.length);
+            current = pool[idx];
+            pool.splice(idx, 1);
+            audio.src = current.f;
+        }
+
+        if (audio.paused) {
+            audio.play().then(() => {
+                status.innerText = "🔊 SZÓL A MOZI...";
+                ansBtn.style.display = "block";
+                replayBtn.style.display = "block";
+                playBtn.innerText = "⏸️ MEGÁLLÍTÁS";
+            }).catch(e => {
+                status.innerText = "❌ HIBA!";
+                errorBox.style.display = "block";
+                errorBox.innerHTML = `Hiányzó fájl: <b>${current.f}</b>`;
+                current = null;
+            });
+        } else {
+            audio.pause();
+            status.innerText = "⏸️ MEGÁLLÍTVA";
+            playBtn.innerText = "▶️ FOLYTATÁS";
+        }
+    };
+
+    replayBtn.onclick = () => {
+        audio.currentTime = 0;
+        audio.play();
+        status.innerText = "🔊 ÚJRA AZ ELEJÉTŐL...";
+        playBtn.innerText = "⏸️ MEGÁLLÍTÁS";
+    };
+
+    ansBtn.onclick = () => {
+        audio.pause();
+        audio.currentTime = 0;
+        document.getElementById('res-title').innerText = current.c;
+        document.getElementById('res-year').innerText = current.e;
+        resBox.style.display = "block";
+        ansBtn.style.display = "none";
+        replayBtn.style.display = "none";
+        playBtn.innerText = "🎬 KÖVETKEZŐ RÉSZLET";
+        status.innerText = "SIKERÜLT?";
+        current = null;
+    };
+</script>
+</body>
+</html>
